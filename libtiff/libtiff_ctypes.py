@@ -1233,6 +1233,10 @@ class TIFF(ctypes.c_void_p):
         return libtiff.TIFFReadEncodedStrip(self, strip, buf, size).value
     readencodedstrip = ReadEncodedStrip
 
+    def DefaultStripSize(self, estimate):
+        return libtiff.TIFFDefaultStripSize(self, estimate)
+    defaultstripsize = DefaultStripSize
+
     def StripSize(self):
         return libtiff.TIFFStripSize(self).value
     stripsize = StripSize
@@ -1328,7 +1332,7 @@ class TIFF(ctypes.c_void_p):
     # def (self): return libtiff.TIFF(self)
 
     @debug
-    def GetField(self, tag, ignore_undefined_tag=True, count=None):
+    def GetField(self, tag, ignore_undefined_tag=True, count=None, defaulted=False):
         """ Return TIFF field _value with tag.
 
         tag can be numeric constant TIFFTAG_<tagname> or a
@@ -1351,6 +1355,11 @@ class TIFF(ctypes.c_void_p):
                 print('Warning: no tag %r defined' % tag)
             return
         data_type, convert = t
+
+        if defaulted:
+            TIFFGetField = libtiff.TIFFGetFieldDefaulted
+        else:
+            TIFFGetField = libtiff.TIFFGetField
 
         if tag == TIFFTAG_COLORMAP:
             bps = self.GetField("BitsPerSample")
@@ -1377,7 +1386,7 @@ class TIFF(ctypes.c_void_p):
             bdata_ptr = ctypes.byref(bdata)
 
             # ignore count, it's not used for colormap
-            r = libtiff.TIFFGetField(self, c_ttag_t(tag), rdata_ptr, gdata_ptr,
+            r = TIFFGetField(self, c_ttag_t(tag), rdata_ptr, gdata_ptr,
                                      bdata_ptr)
             data = (rdata, gdata, bdata)
         elif isinstance(data_type, tuple):
@@ -1397,13 +1406,13 @@ class TIFF(ctypes.c_void_p):
                 data = data_type()
 
             if count is None:
-                r = libtiff.TIFFGetField(self, c_ttag_t(tag),
-                                         ctypes.byref(data))
+                r = TIFFGetField(self, c_ttag_t(tag),
+                                 ctypes.byref(data))
             else:
                 # TODO: is this ever used? Is there any tag that is
                 # accessed like that?
-                r = libtiff.TIFFGetField(self, c_ttag_t(tag),
-                                         count, ctypes.byref(data))
+                r = TIFFGetField(self, c_ttag_t(tag),
+                                 count, ctypes.byref(data))
         if not r:  # tag not defined for current directory
             if not ignore_undefined_tag:
                 print(
@@ -1812,6 +1821,8 @@ libtiff.TIFFIsMSB2LSB.argtypes = [TIFF]
 # GetField and SetField arguments are dependent on the tag
 libtiff.TIFFGetField.restype = ctypes.c_int
 
+libtiff.TIFFGetFieldDefaulted.restype = ctypes.c_int
+
 libtiff.TIFFSetField.restype = ctypes.c_int
 
 libtiff.TIFFNumberOfStrips.restype = c_tstrip_t
@@ -1842,6 +1853,9 @@ libtiff.TIFFWriteEncodedStrip.argtypes = [TIFF, c_tstrip_t, c_tdata_t,
 
 libtiff.TIFFStripSize.restype = c_tsize_t
 libtiff.TIFFStripSize.argtypes = [TIFF]
+
+libtiff.TIFFDefaultStripSize.restype = ctypes.c_uint
+libtiff.TIFFDefaultStripSize.argstypes = [TIFF, ctypes.c_uint]
 
 libtiff.TIFFRawStripSize.restype = c_tsize_t
 libtiff.TIFFRawStripSize.argtypes = [TIFF, c_tstrip_t]
