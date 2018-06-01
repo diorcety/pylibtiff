@@ -18,7 +18,7 @@ MAJOR = 0
 MINOR = 4
 MICRO = 2
 ISRELEASED = True
-VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+VERSION = '%d.%d.%d+x' % (MAJOR, MINOR, MICRO)
 
 if os.path.exists('MANIFEST'): 
     os.remove('MANIFEST')
@@ -64,15 +64,6 @@ print(version)
         a.close()
 
 
-def configuration(parent_package='', top_path=None):
-    from numpy.distutils.misc_util import Configuration
-    config = Configuration(None, parent_package, top_path)
-    config.add_subpackage('libtiff')
-    config.get_version('libtiff/version.py')
-    config.add_data_files(('libtiff', 'LICENSE'))
-    return config
-
-
 if __name__ == '__main__':
     from numpy.distutils.core import setup, Extension
 
@@ -87,7 +78,7 @@ if __name__ == '__main__':
     write_version_py()
 
     setup(name='libtiff',
-          # version='0.3-svn',
+          version=VERSION,
           author='Pearu Peterson',
           author_email='pearu.peterson@gmail.com',
           license='https://github.com/pearu/pylibtiff/blob/master/LICENSE',
@@ -104,6 +95,5 @@ PyLibTiff? is a Python package that provides the following modules:
           platforms=["All"],
           # packages = ['libtiff'],
           # package_dir = {'libtiff': 'libtiff'},
-          configuration=configuration,
           ext_modules=[bittools_mod, tif_lzw_mod], requires=['numpy']
           )
