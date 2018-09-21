@@ -19,46 +19,22 @@ import collections
 
 __all__ = ['libtiff', 'TIFF']
 
-cwd = os.getcwd()
 try:
-    os.chdir(os.path.dirname(__file__))
-    if os.name == 'nt':
-        # assume that the directory of libtiff3.dll is in PATH.
-        lib = ctypes.util.find_library('libtiff3')
-        if lib is None:
-            lib = ctypes.util.find_library('libtiff.dll')
-        if lib is None:
-            # try default installation path:
-            lib = r'C:\Program Files\GnuWin32\bin\libtiff3.dll'
-            if os.path.isfile(lib):
-                print('You should add %r to PATH environment'
-                      ' variable and reboot.'
-                      % (os.path.dirname(lib)))
-            else:
-                lib = None
-    else:
-        if hasattr(sys, 'frozen') and sys.platform == 'darwin' and \
-                os.path.exists('../Frameworks/libtiff.dylib'):
-            # py2app support, see Issue 8.
-            lib = '../Frameworks/libtiff.dylib'
+    # If LD_LIBRARY_PATH or your OSs equivalent is set, this is the only way to
+    # load the library.  If we use find_library below, we get the wrong result.
+    if os.name == 'posix':
+        if sys.platform == 'darwin':
+            libpath = 'libtiff.5.dylib'
         else:
-            lib = ctypes.util.find_library('tiff')
-
-    libtiff = None if lib is None else ctypes.cdll.LoadLibrary(lib)
-    if libtiff is None:
-        try:
-            if sys.platform == "darwin":
-                libtiff = ctypes.cdll.LoadLibrary("libtiff.dylib")
-            elif "win" in sys.platform:
-                libtiff = ctypes.cdll.LoadLibrary("libtiff.dll")
-            else:
-                libtiff = ctypes.cdll.LoadLibrary("libtiff.so")
-        except OSError:
-            raise ImportError('Failed to find TIFF library. Make sure that'
-                              ' libtiff is installed and its location is'
-                              ' listed in PATH|LD_LIBRARY_PATH|..')
-finally:
-    os.chdir(cwd)
+            libpath = 'libtiff.so.5'
+    elif os.name == 'nt':
+        libpath = 'libtiff.dll'
+    libtiff = ctypes.cdll.LoadLibrary(libpath)
+except OSError:
+    libpath = ctypes.util.find_library("tiff")
+    if not libpath:
+        raise ImportError("Unable to find tiff")
+    libtiff = ctypes.cdll.LoadLibrary(libpath)
 
 libtiff.TIFFGetVersion.restype = ctypes.c_char_p
 libtiff.TIFFGetVersion.argtypes = []
