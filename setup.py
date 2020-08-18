@@ -27,8 +27,8 @@ Operating System :: MacOS
 MAJOR = 0
 MINOR = 4
 MICRO = 4
-ISRELEASED = False
-VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+ISRELEASED = True
+VERSION = '%d.%d.%d+x' % (MAJOR, MINOR, MICRO)
 
 if os.path.exists('MANIFEST'):
     os.remove('MANIFEST')
