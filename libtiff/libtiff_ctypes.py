@@ -45,74 +45,8 @@ assert i != -1, repr(libtiff_version_str.decode())
 libtiff_version = libtiff_version_str.split()[i + 1].decode()
 
 tiff_h_name = 'tiff_h_%s' % (libtiff_version.replace('.', '_'))
-try:
-    exec(u"import libtiff.{0:s} as tiff_h".format(tiff_h_name))
-except ImportError:
-    tiff_h = None
-
-if tiff_h is None:
-    # WARNING: there is not guarantee that the tiff.h found below will
-    # correspond to libtiff version. Although, for clean distros the
-    # probability is high.
-
-    include_tiff_h = os.path.join(os.path.split(lib)[0], '..', 'include',
-                                  'tiff.h')
-    if not os.path.isfile(include_tiff_h):
-        include_tiff_h = os.path.join(os.path.split(lib)[0], 'include',
-                                      'tiff.h')
-    if not os.path.isfile(include_tiff_h):
-        # fix me for windows:
-        include_tiff_h = os.path.join(sys.prefix, 'include', 'tiff.h')
-        # print(include_tiff_h)
-    if not os.path.isfile(include_tiff_h):
-        import glob
-        include_tiff_h = (glob.glob(os.path.join(sys.prefix, 'include',
-                                                 '*linux-gnu', 'tiff.h')) +
-                          [include_tiff_h])[0]
-    if not os.path.isfile(include_tiff_h):
-        # Base it off of the python called
-        include_tiff_h = os.path.realpath(os.path.join(os.path.split(
-            sys.executable)[0], '..', 'include', 'tiff.h'))
-    if not os.path.isfile(include_tiff_h):
-        raise ValueError('Failed to find TIFF header file (may be need to '
-                         'run: sudo apt-get install libtiff4-dev)')
-    # Read TIFFTAG_* constants for the header file:
-    f = open(include_tiff_h, 'r')
-    lst = []
-    d = {}
-    for line in f.readlines():
-        if not line.startswith('#define'):
-            continue
-        words = line[7:].lstrip().split()
-        if len(words) > 2:
-            words[1] = ''.join(words[1:])
-            del words[2:]
-        if len(words) != 2:
-            continue
-        name, value = words
-        i = value.find('/*')
-        if i != -1:
-            value = value[:i]
-        if value in d:
-            value = d[value]
-        else:
-            try:
-                value = eval(value)
-            except Exception as msg:
-                print(repr((value, line)), msg)
-                raise
-        d[name] = value
-        lst.append('%s = %s' % (name, value))
-    f.close()
-
-    fn = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                      tiff_h_name + '.py')
-    print('Generating %r from %r' % (fn, include_tiff_h))
-    f = open(fn, 'w')
-    f.write('\n'.join(lst) + '\n')
-    f.close()
-else:
-    d = tiff_h.__dict__
+exec(u"import libtiff.{0:s} as tiff_h".format(tiff_h_name))
+d = tiff_h.__dict__
 
 TIFFTAG_CZ_LSMINFO = 34412
 d['TIFFTAG_CZ_LSMINFO'] = TIFFTAG_CZ_LSMINFO
